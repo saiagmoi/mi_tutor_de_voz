@@ -1,47 +1,87 @@
-// Elementos del DOM
-const statusDot = document.getElementById('statusDot');
-const statusText = document.getElementById('statusText');
-const visualOrb = document.getElementById('visualOrb');
-const connectBtn = document.getElementById('connectBtn');
-const btnText = document.getElementById('btnText');
-const keyIndicator = document.getElementById('keyIndicator');
+// ==========================================================
+// 1. Elementos del DOM y Selectores
+// ==========================================================
+const htmlEl = document.documentElement;
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeIcon = document.getElementById('themeIcon');
 const openKeyModalBtn = document.getElementById('openKeyModalBtn');
+const keyLabel = document.getElementById('keyLabel');
 const keyModal = document.getElementById('keyModal');
 const apiKeyInput = document.getElementById('apiKeyInput');
 const toggleKeyVisibility = document.getElementById('toggleKeyVisibility');
 const saveKeyBtn = document.getElementById('saveKeyBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+
+const assistantBubble = document.getElementById('assistantBubble');
+const bubbleStage = document.querySelector('.bubble-stage');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const assistantTitle = document.getElementById('assistantTitle');
+const assistantSubtitle = document.getElementById('assistantSubtitle');
+const connectBtn = document.getElementById('connectBtn');
+const btnIcon = document.getElementById('btnIcon');
+const btnText = document.getElementById('btnText');
+const voiceBar = document.getElementById('voiceBar');
 const remoteAudio = document.getElementById('remoteAudio');
 const errorBanner = document.getElementById('errorBanner');
 const errorMessage = document.getElementById('errorMessage');
 
-// Variables de estado
+// Constantes y Estado de la Aplicación
+const STORAGE_KEY = 'openai_api_key';
+const STORAGE_THEME = 'tutor_theme_preference';
+
 let isConnected = false;
 let peerConnection = null;
 let dataChannel = null;
 let localMediaStream = null;
 
-// Clave en LocalStorage
-const STORAGE_KEY = 'openai_api_key';
+// ==========================================================
+// 2. Gestión de Temas: Modo Oscuro y Modo Claro
+// ==========================================================
+function initTheme() {
+  const savedTheme = localStorage.getItem(STORAGE_THEME);
+  if (savedTheme) {
+    applyTheme(savedTheme);
+  } else {
+    // Detectar preferencia del sistema operativo
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(prefersLight ? 'light' : 'dark');
+  }
+}
 
-// 1. Inicialización de la API Key
+function applyTheme(theme) {
+  htmlEl.setAttribute('data-theme', theme);
+  localStorage.setItem(STORAGE_THEME, theme);
+  themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
+}
+
+themeToggleBtn.addEventListener('click', () => {
+  const currentTheme = htmlEl.getAttribute('data-theme') || 'dark';
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme(newTheme);
+});
+
+// ==========================================================
+// 3. Gestión de la OpenAI API Key
+// ==========================================================
 function initApiKey() {
   const savedKey = localStorage.getItem(STORAGE_KEY);
   if (savedKey) {
     updateKeyDisplay(savedKey);
   } else {
-    // Si no existe, abrir el modal en el primer inicio
+    // Abrir automáticamente el modal en la primera visita
     showModal();
   }
 }
 
 function updateKeyDisplay(key) {
   if (key) {
-    const masked = key.slice(0, 7) + '...' + key.slice(-4);
-    keyIndicator.textContent = `🔑 Clave API: ${masked}`;
-    keyIndicator.style.color = '#10b981';
+    const masked = key.slice(0, 6) + '...' + key.slice(-3);
+    keyLabel.textContent = masked;
+    openKeyModalBtn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
   } else {
-    keyIndicator.textContent = '🔑 Clave API: No configurada';
-    keyIndicator.style.color = '#94a3b8';
+    keyLabel.textContent = 'API Key';
+    openKeyModalBtn.style.borderColor = '';
   }
 }
 
@@ -56,6 +96,11 @@ function hideModal() {
 }
 
 openKeyModalBtn.addEventListener('click', showModal);
+closeModalBtn.addEventListener('click', () => {
+  if (localStorage.getItem(STORAGE_KEY)) {
+    hideModal();
+  }
+});
 
 toggleKeyVisibility.addEventListener('click', () => {
   if (apiKeyInput.type === 'password') {
@@ -70,7 +115,7 @@ toggleKeyVisibility.addEventListener('click', () => {
 saveKeyBtn.addEventListener('click', () => {
   const key = apiKeyInput.value.trim();
   if (!key) {
-    alert('Por favor ingresá una API Key válida.');
+    alert('Por favor ingresá tu OpenAI API Key.');
     return;
   }
   if (!key.startsWith('sk-')) {
@@ -83,48 +128,74 @@ saveKeyBtn.addEventListener('click', () => {
   hideError();
 });
 
-// Cerrar modal al hacer clic fuera del contenido
 keyModal.addEventListener('click', (e) => {
   if (e.target === keyModal && localStorage.getItem(STORAGE_KEY)) {
     hideModal();
   }
 });
 
-// 2. Control de Estados visuales de la UI
-function setUIState(state, message) {
-  statusDot.className = 'status-dot';
-  visualOrb.classList.remove('active');
+// ==========================================================
+// 4. Estados Visuales y Animaciones de la Burbuja
+// ==========================================================
+function setUIState(state, customMessage) {
+  // Limpiar clases de estado
+  statusDot.className = 'status-indicator-dot';
+  assistantBubble.className = 'glowing-bubble';
+  bubbleStage.className = 'bubble-stage';
 
   switch (state) {
     case 'disconnected':
-      statusText.textContent = message || 'Desconectado';
-      btnText.textContent = 'Comenzar a Hablar';
-      connectBtn.className = 'btn btn-primary';
+      statusText.textContent = 'Listo para conversar';
+      assistantTitle.textContent = 'Tu tutor personal de inglés';
+      assistantSubtitle.textContent = 'Practicá hablando con naturalidad. Alex te escuchará y responderá con voz humana al instante.';
+      btnIcon.textContent = '▶';
+      btnText.textContent = 'Comenzar Conversación';
+      connectBtn.className = 'main-action-btn';
       connectBtn.disabled = false;
+      voiceBar.classList.remove('active');
       isConnected = false;
       break;
 
     case 'connecting':
       statusDot.classList.add('connecting');
-      statusText.textContent = message || 'Conectando con el tutor...';
+      assistantBubble.classList.add('connecting');
+      statusText.textContent = customMessage || 'Conectando con Alex...';
+      assistantTitle.textContent = 'Conectando llamada...';
+      assistantSubtitle.textContent = 'Estableciendo canal de audio seguro con OpenAI.';
+      btnIcon.textContent = '⏳';
       btnText.textContent = 'Conectando...';
       connectBtn.disabled = true;
+      voiceBar.classList.remove('active');
       break;
 
-    case 'connected':
-      statusDot.classList.add('connected');
-      visualOrb.classList.add('active');
-      statusText.textContent = message || 'Conectado (Escuchando...)';
-      btnText.textContent = 'Finalizar Conversación';
-      connectBtn.className = 'btn btn-danger';
+    case 'listening':
+      statusDot.classList.add('listening');
+      assistantBubble.classList.add('listening');
+      bubbleStage.classList.add('listening');
+      statusText.textContent = 'Te estoy escuchando...';
+      assistantTitle.textContent = 'Tu turno de hablar';
+      assistantSubtitle.textContent = 'Hablale a Alex como a un amigo. No te preocupes por equivocarte.';
+      btnIcon.textContent = '⏹';
+      btnText.textContent = 'Finalizar Llamada';
+      connectBtn.className = 'main-action-btn btn-active';
       connectBtn.disabled = false;
+      voiceBar.classList.add('active');
       isConnected = true;
       break;
 
     case 'speaking':
       statusDot.classList.add('speaking');
-      visualOrb.classList.add('active');
-      statusText.textContent = message || 'El tutor está hablando...';
+      assistantBubble.classList.add('speaking');
+      bubbleStage.classList.add('speaking');
+      statusText.textContent = 'Alex está hablando...';
+      assistantTitle.textContent = 'Alex está respondiendo';
+      assistantSubtitle.textContent = 'Escuchá la pronunciación y su respuesta con atención.';
+      btnIcon.textContent = '⏹';
+      btnText.textContent = 'Finalizar Llamada';
+      connectBtn.className = 'main-action-btn btn-active';
+      connectBtn.disabled = false;
+      voiceBar.classList.add('active');
+      isConnected = true;
       break;
   }
 }
@@ -139,7 +210,9 @@ function hideError() {
   errorMessage.textContent = '';
 }
 
-// 3. Conexión WebRTC con OpenAI Realtime API (GA)
+// ==========================================================
+// 5. Conexión WebRTC con OpenAI Realtime API (GA)
+// ==========================================================
 async function startSession() {
   hideError();
   const apiKey = localStorage.getItem(STORAGE_KEY);
@@ -150,9 +223,9 @@ async function startSession() {
   }
 
   try {
-    setUIState('connecting', 'Obteniendo credenciales efímeras...');
+    setUIState('connecting', 'Solicitando credenciales efímeras...');
 
-    // Paso A: Solicitar Token Efímero a nuestro backend mediante POST /api/session
+    // 1. Obtener Token Efímero desde nuestro backend
     const tokenRes = await fetch('/api/session', {
       method: 'POST',
       headers: {
@@ -169,34 +242,33 @@ async function startSession() {
     const ephemeralToken = tokenData.client_secret?.value || tokenData.client_secret || tokenData.value;
 
     if (!ephemeralToken) {
-      throw new Error('No se pudo extraer el token efímero de la respuesta.');
+      throw new Error('No se pudo extraer el token efímero de la sesión.');
     }
 
-    setUIState('connecting', 'Conectando audio y micrófono...');
+    setUIState('connecting', 'Activando micrófono...');
 
-    // Paso B: Crear instancia de RTCPeerConnection
+    // 2. Inicializar RTCPeerConnection
     peerConnection = new RTCPeerConnection();
 
-    // Reproducir el audio entrante del tutor
+    // Reproducir audio remoto
     peerConnection.ontrack = (event) => {
       remoteAudio.srcObject = event.streams[0];
     };
 
-    // Capturar el micrófono del usuario
+    // Capturar micrófono local
     localMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     localMediaStream.getTracks().forEach((track) => {
       peerConnection.addTrack(track, localMediaStream);
     });
 
-    // Paso C: Crear DataChannel ("oai-events") para enviar session.update
+    // 3. Crear DataChannel para eventos del tutor
     dataChannel = peerConnection.createDataChannel('oai-events');
 
     dataChannel.addEventListener('open', () => {
-      console.log('WebRTC DataChannel abierto.');
+      console.log('Canal de eventos WebRTC listo.');
 
-      // Prompt para el tutor de inglés conversacional
-      const tutorPrompt = `You are a friendly, patient, and encouraging conversational English tutor named Alex.
-Your mission is to help the student practice and gain confidence in speaking English naturally.
+      const tutorPrompt = `You are a friendly, patient, and engaging conversational English tutor named Alex.
+Your mission is to help the student practice and gain confidence speaking natural English.
 Guidelines:
 - Speak clearly, naturally, and warmly in English.
 - Keep your answers concise and conversational (1 to 3 sentences maximum) so the student gets plenty of talking time.
@@ -204,7 +276,7 @@ Guidelines:
 - If the student speaks in Spanish or hesitates, understand them kindly, provide the English expression, and encourage them to repeat it.
 - Be supportive, enthusiastic, and ask engaging open-ended questions about their life, hobbies, work, or interests.`;
 
-      // Evento session.update estrictamente minimalista conforme a la API GA
+      // Payload strictly minimalista conforme a OpenAI Realtime GA
       const sessionUpdate = {
         type: 'session.update',
         session: {
@@ -214,30 +286,29 @@ Guidelines:
       };
 
       dataChannel.send(JSON.stringify(sessionUpdate));
-      console.log('session.update enviado al tutor.');
+      console.log('Evento session.update enviado exitosamente.');
     });
 
-    // Detectar eventos del DataChannel para animar la interfaz
+    // Animar la burbuja según los eventos en tiempo real
     dataChannel.addEventListener('message', (event) => {
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === 'response.audio.delta') {
-          setUIState('speaking', 'Alex está hablando...');
+          setUIState('speaking');
         } else if (msg.type === 'response.done') {
-          setUIState('connected', 'Conectado (Tu turno de hablar)');
+          setUIState('listening');
         } else if (msg.type === 'input_audio_buffer.speech_started') {
-          setUIState('connected', 'Alex te está escuchando...');
+          setUIState('listening');
         }
       } catch (e) {
         // Ignorar mensajes no JSON
       }
     });
 
-    // Paso D: Crear oferta SDP y configurar descripción local
+    // 4. Oferta WebRTC y Handshake con OpenAI en /v1/realtime/calls
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
 
-    // Paso E: Handshake WebRTC con OpenAI en https://api.openai.com/v1/realtime/calls
     const sdpResponse = await fetch('https://api.openai.com/v1/realtime/calls', {
       method: 'POST',
       body: offer.sdp,
@@ -249,7 +320,7 @@ Guidelines:
 
     if (!sdpResponse.ok) {
       const errDetail = await sdpResponse.text();
-      throw new Error(`Fallo en el handshake de OpenAI (${sdpResponse.status}): ${errDetail}`);
+      throw new Error(`Fallo en el handshake WebRTC (${sdpResponse.status}): ${errDetail}`);
     }
 
     const answerSdp = await sdpResponse.text();
@@ -260,17 +331,19 @@ Guidelines:
 
     await peerConnection.setRemoteDescription(answer);
 
-    // Conexión exitosa
-    setUIState('connected', 'Conectado (¡Empezá a hablar en inglés!)');
+    // Conectado con éxito
+    setUIState('listening');
 
   } catch (error) {
-    console.error('Error al iniciar la sesión:', error);
+    console.error('Error durante la sesión:', error);
     showError(error.message || 'Error desconocido al conectar.');
     stopSession();
   }
 }
 
-// 4. Detener y limpiar la sesión
+// ==========================================================
+// 6. Detener Sesión y Limpiar Recursos
+// ==========================================================
 function stopSession() {
   if (localMediaStream) {
     localMediaStream.getTracks().forEach((track) => track.stop());
@@ -287,10 +360,10 @@ function stopSession() {
     peerConnection = null;
   }
 
-  setUIState('disconnected', 'Desconectado');
+  setUIState('disconnected');
 }
 
-// 5. Manejador del botón principal
+// Botón de acción y clic directo sobre la burbuja
 connectBtn.addEventListener('click', () => {
   if (isConnected) {
     stopSession();
@@ -299,5 +372,14 @@ connectBtn.addEventListener('click', () => {
   }
 });
 
-// Iniciar comprobación de API Key
+assistantBubble.addEventListener('click', () => {
+  if (isConnected) {
+    stopSession();
+  } else {
+    startSession();
+  }
+});
+
+// Inicialización general
+initTheme();
 initApiKey();

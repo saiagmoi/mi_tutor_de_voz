@@ -6,49 +6,43 @@ Diseñado especialmente para personas sin conocimientos técnicos: **¡sin neces
 
 ---
 
-## ✨ Características Principales
+## 🚀 Cómo Iniciar en macOS (con 1 solo clic)
 
-- **Conexión WebRTC de Alta Velocidad**: Audio bidireccional en tiempo real contra `https://api.openai.com/v1/realtime/calls`.
-- **Tokens Efímeros de Seguridad**: El backend genera un `client_secret` temporal en `https://api.openai.com/v1/realtime/client_secrets` para que tu clave de API nunca quede expuesta públicamente.
-- **Configuración Minimalista (API GA)**: Envío de `session.update` limpio y compatible, sin parámetros obsoletos.
-- **Tutor Amigable y Paciente**: Configurado con un prompt pedagógico para incentivar la conversación fluida y corregir de manera constructiva.
-- **Privacidad Local**: La clave API se almacena de forma segura únicamente en tu navegador (`localStorage`).
-- **Lanzadores con 1 Clic**: Archivo `.bat` para Windows y `.command` para Mac.
+1. En el **Finder**, ve a la carpeta del proyecto.
+2. Haz **doble clic sobre el archivo `INICIAR_MAC.command`** (o `INICIAR.command`).
+3. El lanzador detectará el entorno, levantará el servidor local automáticamente y abrirá `http://localhost:3000` en tu navegador (Safari, Chrome, etc.).
+   *(No necesitas instalar Node.js ni configurar nada: si tu Mac no tiene Node, utiliza automáticamente el motor nativo de macOS).*
 
 ---
 
-## 🚀 Cómo Iniciar la Aplicación
+## 💻 Cómo Iniciar en Windows
 
-### En Windows (con 1 solo clic):
-1. Asegúrate de tener instalado [Node.js](https://nodejs.org) (versión 18 o superior).
-2. Haz **doble clic en el archivo `INICIAR.bat`**.
-3. El lanzador instalará las dependencias necesarias automáticamente, levantará el servidor en segundo plano y abrirá `http://localhost:3000` en tu navegador.
-
-### En macOS:
-1. Haz **doble clic en `INICIAR.command`** (o ejecuta `npm install && npm start`).
-2. Se abrirá automáticamente tu navegador en `http://localhost:3000`.
+1. Haz **doble clic en el archivo `INICIAR.bat`**.
+2. Instalará dependencias automáticamente y abrirá el navegador.
 
 ---
 
 ## 📖 Cómo Usar el Tutor
 
 1. Al abrir la página por primera vez, te pedirá tu **OpenAI API Key** (`sk-...`).
-2. Haz clic en **"Guardar y Continuar"**.
+2. Haz clic en **"Guardar y Continuar"** (se guarda de forma segura en tu propio navegador).
 3. Presiona el botón **"Comenzar a Hablar"** y autoriza los permisos de micrófono si tu navegador los solicita.
-4. ¡Empieza a conversar en inglés con Alex!
+4. ¡Listo! Ya puedes hablar en inglés de forma natural con Alex.
 
 ---
 
 ## 🛠️ Arquitectura Técnica
 
 ```
-├── server.js            # Servidor Node.js/Express (genera Token Efímero via header x-api-key)
-├── package.json         # Dependencias del servidor (express)
-├── INICIAR.bat          # Lanzador automático con 1 clic para Windows
-├── INICIAR.command      # Lanzador automático con 1 clic para macOS
-├── GEMINI.md            # Reglas permanentes del proyecto
+├── INICIAR_MAC.command  # Lanzador automático con doble clic para Mac
+├── INICIAR.command      # Lanzador compatible para Mac / Linux
+├── INICIAR.bat          # Lanzador automático con doble clic para Windows
+├── server.py            # Servidor nativo con zero-dependencias para macOS
+├── server.js            # Servidor Node.js / Express
+├── package.json         # Configuración del paquete Node.js
+├── GEMINI.md            # Reglas permanentes del repositorio y Git
 └── public/
-    ├── index.html       # Estructura de la aplicación web
-    ├── style.css        # Estilos modernos y animación del micrófono
-    └── app.js           # Lógica WebRTC, handshake y DataChannel session.update
+    ├── index.html       # Interfaz visual de usuario
+    ├── style.css        # Animación del micrófono y estilos modernos
+    └── app.js           # Lógica WebRTC, handshake contra /v1/realtime/calls y session.update
 ```

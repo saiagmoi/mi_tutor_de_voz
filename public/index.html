@@ -10,78 +10,85 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Ambient background glow elements -->
+  <!-- Luces ambientales de fondo -->
   <div class="bg-blur blur-top"></div>
   <div class="bg-blur blur-bottom"></div>
 
   <div class="app-container">
-    <!-- Top Navigation Bar -->
+    <!-- Barra Superior de Navegación -->
     <header class="top-nav">
       <div class="brand">
         <span class="brand-sparkle">✦</span>
         <span class="brand-name">Alex Voice Tutor</span>
       </div>
       <div class="nav-controls">
+        <!-- Selector/Memoria de Nivel -->
+        <button id="levelBtn" class="btn-config-pill" title="Tu nivel de inglés">
+          <span class="pill-icon">🎯</span>
+          <span class="pill-label" id="levelLabel">Nivel: Sin definir</span>
+        </button>
+        <!-- Alternar Tema Claro/Oscuro -->
         <button id="themeToggleBtn" class="theme-toggle-btn" title="Alternar modo claro/oscuro" aria-label="Cambiar tema">
           <span class="theme-icon" id="themeIcon">🌙</span>
         </button>
-        <button id="openKeyModalBtn" class="btn-config-key" title="Configurar OpenAI API Key">
-          <span class="key-icon">🔑</span>
-          <span class="key-label" id="keyLabel">API Key</span>
+        <!-- Configuración de API Key -->
+        <button id="openKeyModalBtn" class="btn-config-pill" title="Configurar OpenAI API Key">
+          <span class="pill-icon">🔑</span>
+          <span class="pill-label" id="keyLabel">API Key</span>
         </button>
       </div>
     </header>
 
-    <!-- Main Experience Card -->
+    <!-- Tarjeta Principal del Asistente -->
     <main class="tutor-card">
-      <!-- Status Badge -->
+      <!-- Píldora de Estado y Memoria de Idioma -->
       <div class="status-pill" id="statusPill">
         <span class="status-indicator-dot" id="statusDot"></span>
-        <span class="status-caption" id="statusText">Listo para comenzar</span>
+        <span class="status-caption" id="statusText">Listo para conversar</span>
       </div>
 
-      <!-- Assistant Living Glowing Bubble -->
+      <!-- Asistente: La Burbuja con Brillo Realista -->
       <div class="bubble-stage">
         <div class="bubble-aura" id="bubbleAura"></div>
         <div class="glow-ring ring-1"></div>
         <div class="glow-ring ring-2"></div>
         
-        <div class="glowing-bubble" id="assistantBubble">
-          <!-- Glass Specular Glare / Brillo de luz superior -->
+        <div class="glowing-bubble" id="assistantBubble" title="Haz clic para hablar o pausar">
+          <!-- Brillo de luz superior curvado (Glare) -->
           <div class="bubble-glare"></div>
+          <!-- Punto de luz especular intenso (Glint) -->
           <div class="bubble-glint"></div>
           
-          <!-- Inner Fluid Atmosphere -->
+          <!-- Núcleo fluido animado con aurora interna -->
           <div class="bubble-inner-core"></div>
           
-          <!-- Internal Ambient Light Particles -->
+          <!-- Destellos sutiles interiores -->
           <div class="bubble-sparkles">
             <span class="sparkle s1">✦</span>
             <span class="sparkle s2">✧</span>
             <span class="sparkle s3">✦</span>
           </div>
 
-          <!-- Bottom Reflected Rim Light -->
+          <!-- Luz de rebote inferior (Rim Light) -->
           <div class="bubble-rim"></div>
         </div>
       </div>
 
-      <!-- Assistant Subtitle / Live Feedback -->
+      <!-- Feedback Dinámico -->
       <div class="feedback-area">
         <h2 id="assistantTitle">Tu tutor personal de inglés</h2>
-        <p id="assistantSubtitle" class="assistant-subtitle">Practicá hablando con naturalidad. Alex te escuchará y responderá con voz humana al instante.</p>
+        <p id="assistantSubtitle" class="assistant-subtitle">Practicá hablando con fluidez. Respuestas rápidas, temas de la vida real y adaptación a tu idioma y nivel.</p>
       </div>
 
-      <!-- Main Action Call to Action -->
+      <!-- Botón Principal de Llamada -->
       <div class="controls-area">
         <button id="connectBtn" class="main-action-btn">
-          <div class="btn-glow-layer"></div>
           <span class="btn-icon" id="btnIcon">▶</span>
           <span class="btn-label" id="btnText">Comenzar Conversación</span>
         </button>
       </div>
 
-      <!-- Dynamic Voice Level Bar -->
+      <!-- Ecualizador Dinámico de Voz -->
       <div class="voice-activity-bar" id="voiceBar">
         <div class="voice-wave wave-1"></div>
         <div class="voice-wave wave-2"></div>
@@ -90,18 +97,20 @@
         <div class="voice-wave wave-5"></div>
       </div>
 
-      <!-- Tips Container -->
+      <!-- Sugerencias y Reglas de Idioma -->
       <div class="tips-card">
         <div class="tips-header">
-          <span class="tips-icon">💡</span>
-          <span class="tips-title">¿De qué podés hablar?</span>
+          <span class="tips-icon">💬</span>
+          <span class="tips-title">Reglas de conversación inteligente</span>
         </div>
-        <p class="tips-description">
-          Podés contarle qué hiciste hoy, practicar para una entrevista o pedirle que simulen pedir comida en un restaurante. Si no sabés una palabra, preguntale en español: <em>«How do you say...?»</em>.
-        </p>
+        <ul class="tips-list">
+          <li><strong>Si hablas en español:</strong> Alex te responderá en español explicándote o guiándote.</li>
+          <li><strong>Si hablas en inglés:</strong> Alex te contestará en inglés para practicar pronunciación y fluidez.</li>
+          <li><strong>Temas reales:</strong> Hablen de películas, viajes, trabajo o anécdotas de la vida diaria.</li>
+        </ul>
       </div>
 
-      <!-- Error Notification Banner -->
+      <!-- Banner de Error -->
       <div id="errorBanner" class="error-banner hidden">
         <span class="error-icon">⚠️</span>
         <span id="errorMessage"></span>
@@ -110,8 +119,54 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <span>Desarrollado con OpenAI Realtime API (WebRTC)</span>
+      <span>OpenAI Realtime API GA • WebRTC de Ultra Baja Latencia</span>
     </footer>
+  </div>
+
+  <!-- Modal para Configurar/Evaluar Nivel de Inglés -->
+  <div id="levelModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-top">
+        <div class="modal-badge">Memoria de Progreso</div>
+        <h3>Nivel de Inglés</h3>
+        <p>Alex adapta la velocidad, vocabulario y temas según tu nivel actual. Podés elegirlo ahora o pedirle a Alex que te haga un test rápido por voz.</p>
+      </div>
+      <div class="level-options-grid">
+        <button class="level-chip" data-level="A1 - Principiante">
+          <span class="chip-code">A1</span>
+          <span class="chip-name">Principiante</span>
+          <span class="chip-desc">Frases muy básicas y vocabulario inicial</span>
+        </button>
+        <button class="level-chip" data-level="A2 - Básico">
+          <span class="chip-code">A2</span>
+          <span class="chip-name">Básico</span>
+          <span class="chip-desc">Conversaciones cotidianas simples</span>
+        </button>
+        <button class="level-chip" data-level="B1 - Intermedio">
+          <span class="chip-code">B1</span>
+          <span class="chip-name">Intermedio</span>
+          <span class="chip-desc">Fluidez media, viajes y opiniones</span>
+        </button>
+        <button class="level-chip" data-level="B2 - Intermedio Alto">
+          <span class="chip-code">B2</span>
+          <span class="chip-name">Intermedio Alto</span>
+          <span class="chip-desc">Conversaciones complejas y fluidas</span>
+        </button>
+        <button class="level-chip" data-level="C1 - Avanzado">
+          <span class="chip-code">C1</span>
+          <span class="chip-name">Avanzado</span>
+          <span class="chip-desc">Dominio casi nativo y modismos</span>
+        </button>
+        <button class="level-chip level-chip-ask" data-level="diagnostic">
+          <span class="chip-code">❓</span>
+          <span class="chip-name">No lo sé (Test por voz)</span>
+          <span class="chip-desc">Alex te hará 2-3 preguntas fáciles para evaluarte</span>
+        </button>
+      </div>
+      <div class="modal-actions">
+        <button id="closeLevelModalBtn" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
   </div>
 
   <!-- Modal para Configurar API Key -->
@@ -120,7 +175,7 @@
       <div class="modal-top">
         <div class="modal-badge">Configuración</div>
         <h3>Tu OpenAI API Key</h3>
-        <p>Ingresá tu clave personal para conectar con el modelo Realtime. Se almacena únicamente en tu navegador (localStorage).</p>
+        <p>Ingresá tu clave personal para conectar con el modelo Realtime. Se guarda de forma segura en tu propio navegador (localStorage).</p>
       </div>
       <div class="modal-form">
         <div class="input-wrapper">

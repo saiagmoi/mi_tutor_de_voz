@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tutor de Inglés con Voz | OpenAI Realtime</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="badge">🎙️ OpenAI Realtime WebRTC</div>
+      <h1>Tutor de Inglés Conversacional</h1>
+      <p class="subtitle">Practicá tu inglés hablando en tiempo real. Sin demoras y de forma 100% natural.</p>
+    </header>
+
+    <!-- Main Card -->
+    <main class="main-card">
+      <!-- Status Badge -->
+      <div class="status-container">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Desconectado</span>
+      </div>
+
+      <!-- Interactive Orb / Visualizer -->
+      <div class="orb-container">
+        <div class="orb" id="visualOrb">
+          <div class="orb-core">
+            <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+            </svg>
+          </div>
+          <div class="pulse-ring ring-1"></div>
+          <div class="pulse-ring ring-2"></div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="action-container">
+        <button id="connectBtn" class="btn btn-primary">
+          <span class="btn-icon">▶</span>
+          <span class="btn-text" id="btnText">Comenzar a Hablar</span>
+        </button>
+      </div>
+
+      <!-- Helpful tips for the student -->
+      <div class="tips-box">
+        <h4>💡 Consejos para la práctica</h4>
+        <ul>
+          <li>Hablá con naturalidad, el tutor te escuchará y responderá de inmediato.</li>
+          <li>Si cometes algún error gramatical, el tutor te ayudará amablemente a corregirlo.</li>
+          <li>Si no sabes cómo decir algo, podés preguntar en español y te enseñará cómo decirlo en inglés.</li>
+        </ul>
+      </div>
+
+      <!-- Error Message Banner -->
+      <div id="errorBanner" class="error-banner hidden">
+        <span id="errorMessage"></span>
+      </div>
+    </main>
+
+    <!-- Footer with API Key configuration -->
+    <footer class="footer">
+      <div class="key-status">
+        <span id="keyIndicator">🔑 Clave API: No configurada</span>
+        <button id="openKeyModalBtn" class="btn-link">Cambiar clave</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal para ingresar/cambiar la OpenAI API Key -->
+  <div id="keyModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Configurar OpenAI API Key</h3>
+      </div>
+      <div class="modal-body">
+        <p>Para usar el tutor con tu propia cuenta de OpenAI, ingresá tu API Key personal (comienza con <code>sk-</code> o <code>sk-proj-</code>):</p>
+        <div class="input-group">
+          <input type="password" id="apiKeyInput" placeholder="sk-proj-..." autocomplete="off" spellcheck="false">
+          <button type="button" id="toggleKeyVisibility" class="btn-icon-subtle" title="Mostrar/ocultar clave">👁️</button>
+        </div>
+        <p class="modal-note">🔒 Tu clave se guarda exclusivamente en tu propio navegador (localStorage) y nunca queda almacenada en el servidor.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="saveKeyBtn" class="btn btn-primary">Guardar y Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Elemento de audio oculto para reproducir la voz del tutor -->
+  <audio id="remoteAudio" autoplay></audio>
+
+  <script src="app.js"></script>
+</body>
+</html>

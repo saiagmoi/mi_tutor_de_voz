@@ -1,0 +1,12 @@
+{
+  "name": "mi-tutor-de-voz",
+  "version": "1.0.0",
+  "description": "Tutor de inglés conversacional con voz en tiempo real usando OpenAI Realtime API (WebRTC)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

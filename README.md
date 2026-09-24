@@ -10,8 +10,18 @@ Diseñado especialmente para personas sin conocimientos técnicos: **¡sin neces
 
 1. En el **Finder**, ve a la carpeta del proyecto.
 2. Haz **doble clic sobre el archivo `INICIAR_MAC.command`** (o `INICIAR.command`).
-3. El lanzador detectará el entorno, levantará el servidor local automáticamente y abrirá `http://localhost:3000` en tu navegador (Safari, Chrome, etc.).
+3. El lanzador detectará el entorno, levantará el servidor local automáticamente y abrirá `http://localhost:3000` directamente en **Safari**.
    *(No necesitas instalar Node.js ni configurar nada: si tu Mac no tiene Node, utiliza automáticamente el motor nativo de macOS).*
+
+---
+
+## ☁️ Despliegue en Vercel
+
+Puedes desplegar este proyecto directamente en **Vercel**:
+1. Conecta tu repositorio de GitHub a Vercel.
+2. Agrega la variable de entorno en Vercel:
+   - `OPENAI_API_KEY`: tu clave de API de OpenAI (`sk-...`).
+3. ¡Listo! Vercel servirá la aplicación web y ejecutará la función serverless en `/api/session` sin necesidad de ingresar la clave en cada navegador.
 
 ---
 
@@ -24,9 +34,9 @@ Diseñado especialmente para personas sin conocimientos técnicos: **¡sin neces
 
 ## 📖 Cómo Usar el Tutor
 
-1. Al abrir la página por primera vez, te pedirá tu **OpenAI API Key** (`sk-...`).
+1. Al abrir la página por primera vez, te pedirá tu **OpenAI API Key** (`sk-...`) si no está configurada en las variables de entorno de Vercel.
 2. Haz clic en **"Guardar y Continuar"** (se guarda de forma segura en tu propio navegador).
-3. Presiona el botón **"Comenzar a Hablar"** y autoriza los permisos de micrófono si tu navegador los solicita.
+3. Presiona el botón **"Comenzar Conversación"** y autoriza los permisos de micrófono si tu navegador los solicita.
 4. ¡Listo! Ya puedes hablar en inglés de forma natural con Alex.
 
 ---
@@ -34,8 +44,11 @@ Diseñado especialmente para personas sin conocimientos técnicos: **¡sin neces
 ## 🛠️ Arquitectura Técnica
 
 ```
-├── INICIAR_MAC.command  # Lanzador automático con doble clic para Mac
-├── INICIAR.command      # Lanzador compatible para Mac / Linux
+├── api/
+│   └── session.js       # Serverless function para Vercel (/api/session)
+├── vercel.json          # Configuración de rutas y rewrites para Vercel
+├── INICIAR_MAC.command  # Lanzador automático con doble clic para Mac (abre Safari)
+├── INICIAR.command      # Lanzador compatible para Mac / Linux (abre Safari)
 ├── INICIAR.bat          # Lanzador automático con doble clic para Windows
 ├── server.py            # Servidor nativo con zero-dependencias para macOS
 ├── server.js            # Servidor Node.js / Express

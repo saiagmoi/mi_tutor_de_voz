@@ -7,14 +7,21 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Endpoint para verificar si el servidor tiene clave configurada en sus variables de entorno
+app.get('/api/session', (req, res) => {
+  res.json({
+    hasServerKey: Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim())
+  });
+});
+
 // Endpoint para generar el Token Efímero usando la Realtime API de OpenAI (GA)
 app.post('/api/session', async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'];
+    const apiKey = req.headers['x-api-key'] || process.env.OPENAI_API_KEY;
 
-    if (!apiKey) {
+    if (!apiKey || !apiKey.trim()) {
       return res.status(400).json({
-        error: 'No se recibió la OpenAI API Key en el encabezado x-api-key.'
+        error: 'No se configuró la OpenAI API Key (ingresala en la web o configurala en OPENAI_API_KEY).'
       });
     }
 

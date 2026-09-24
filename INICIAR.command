@@ -26,8 +26,8 @@ else
 fi
 
 sleep 1.5
-echo "[INFO] Abriendo en tu navegador predeterminado..."
-open http://localhost:3000
+echo "[INFO] Abriendo en Safari..."
+open -a Safari http://localhost:3000
 
 echo ""
 echo "========================================================"

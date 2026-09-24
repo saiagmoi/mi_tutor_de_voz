@@ -12,15 +12,25 @@ class RealtimeTutorHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=PUBLIC_DIR, **kwargs)
 
+    def do_GET(self):
+        if self.path == "/api/session":
+            has_key = bool(os.environ.get("OPENAI_API_KEY", "").strip())
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"hasServerKey": has_key}).encode("utf-8"))
+            return
+        return super().do_GET()
+
     def do_POST(self):
         if self.path == "/api/session":
-            api_key = self.headers.get("x-api-key")
-            if not api_key:
+            api_key = self.headers.get("x-api-key") or os.environ.get("OPENAI_API_KEY")
+            if not api_key or not api_key.strip():
                 self.send_response(400)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({
-                    "error": "No se recibió la OpenAI API Key en el encabezado x-api-key."
+                    "error": "No se configuró la OpenAI API Key (ingresala en la web o configurala en OPENAI_API_KEY)."
                 }).encode("utf-8"))
                 return
 

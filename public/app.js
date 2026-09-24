@@ -128,6 +128,26 @@ levelChips.forEach(chip => {
   });
 });
 
+let serverHasKey = false;
+
+async function checkServerKey() {
+  try {
+    const res = await fetch('/api/session');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.hasServerKey) {
+        serverHasKey = true;
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          keyLabel.textContent = 'Clave en Servidor';
+          openKeyModalBtn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        }
+      }
+    }
+  } catch (e) {
+    // Si falla o no hay conexión, se continúa normal
+  }
+}
+
 // ==========================================================
 // 5. Gestión de la OpenAI API Key
 // ==========================================================
@@ -135,8 +155,6 @@ function initApiKey() {
   const savedKey = localStorage.getItem(STORAGE_KEY);
   if (savedKey) {
     updateKeyDisplay(savedKey);
-  } else {
-    showModal();
   }
 }
 
@@ -181,7 +199,7 @@ toggleKeyVisibility.addEventListener('click', () => {
 saveKeyBtn.addEventListener('click', () => {
   const key = apiKeyInput.value.trim();
   if (!key) {
-    alert('Por favor ingresa tu OpenAI API Key.');
+    alert('Por favor ingresá tu OpenAI API Key.');
     return;
   }
   if (!key.startsWith('sk-')) {
@@ -212,7 +230,7 @@ function setUIState(state, customMessage) {
     case 'disconnected':
       statusText.textContent = 'Listo para conversar';
       assistantTitle.textContent = 'Tu tutor personal de inglés';
-      assistantSubtitle.textContent = 'Practica hablando con fluidez. Respuestas rápidas, temas de la vida real y adaptación a tu idioma y nivel.';
+      assistantSubtitle.textContent = 'Practicá hablando con fluidez. Respuestas rápidas, temas de la vida real y adaptación a tu idioma y nivel.';
       btnIcon.textContent = '▶';
       btnText.textContent = 'Comenzar Conversación';
       connectBtn.className = 'main-action-btn';
@@ -239,7 +257,7 @@ function setUIState(state, customMessage) {
       bubbleStage.classList.add('listening');
       statusText.textContent = 'Te estoy escuchando...';
       assistantTitle.textContent = 'Tu turno de hablar';
-      assistantSubtitle.textContent = 'Háblale a Alex con naturalidad en inglés o español.';
+      assistantSubtitle.textContent = 'Hablale a Alex con naturalidad en inglés o español.';
       btnIcon.textContent = '⏹';
       btnText.textContent = 'Finalizar Llamada';
       connectBtn.className = 'main-action-btn btn-active';
@@ -282,7 +300,8 @@ async function startSession() {
   hideError();
   const apiKey = localStorage.getItem(STORAGE_KEY);
 
-  if (!apiKey) {
+  // Si no hay API key en el navegador ni en el servidor, abrir modal
+  if (!apiKey && !serverHasKey) {
     showModal();
     return;
   }
@@ -290,17 +309,25 @@ async function startSession() {
   try {
     setUIState('connecting', 'Obteniendo credenciales efímeras...');
 
-    // 1. Solicitar Token Efímero a nuestro servidor local
+    // 1. Solicitar Token Efímero a nuestro servidor (local o Vercel)
+    const headers = {};
+    if (apiKey) {
+      headers['x-api-key'] = apiKey;
+    }
+
     const tokenRes = await fetch('/api/session', {
       method: 'POST',
-      headers: {
-        'x-api-key': apiKey
-      }
+      headers: headers
     });
 
     if (!tokenRes.ok) {
       const errJson = await tokenRes.json().catch(() => ({}));
-      throw new Error(errJson.error || `Error del servidor (${tokenRes.status})`);
+      const msg = errJson.error?.message || errJson.error || errJson.details?.error?.message || `Error del servidor (${tokenRes.status})`;
+      if (tokenRes.status === 400 && !apiKey) {
+        showModal();
+        return;
+      }
+      throw new Error(msg);
     }
 
     const tokenData = await tokenRes.json();
@@ -338,62 +365,61 @@ async function startSession() {
 
       if (savedLevel) {
         levelPromptSection = `MEMORIA DE NIVEL PREVIO:
-- El estudiante ya tiene guardado el nivel: "${savedLevel}".
-- Al inicio de la llamada, salúdalo brevemente recordando su nivel con tuteo neutro: "¡Hola! Recuerdo que estamos practicando en nivel ${savedLevel}. ¿Quieres que sigamos en ese nivel o prefieres que hagamos una prueba rápida para ver si avanzaste?".
-- Adapta la complejidad de tus palabras y tu velocidad exactamente a ese nivel.`;
+- El alumno ya tiene guardado el nivel: "${savedLevel}".
+- Al inicio de la llamada, saludalo brevemente confirmando que recordás su nivel: "¡Hola! Me acuerdo que estamos practicando en nivel ${savedLevel}. ¿Querés que sigamos en ese nivel o preferís que te haga un test rápido para ver si subiste?".
+- Adaptá la complejidad de tus palabras y tu velocidad exactamente a ese nivel.`;
       } else {
         levelPromptSection = `EVALUACIÓN DE NIVEL REQUERIDA:
-- El nivel del estudiante aún NO está definido.
-- Al inicio de la llamada, pregúntale de forma amable, cercana y en español neutro: "¿Qué nivel de inglés sientes que tienes? (Principiante, Intermedio o Avanzado)".
-- Si el estudiante te dice que no lo sabe o duda, dile de inmediato: "¡No te preocupes para nada! Te hago 2 o 3 preguntas muy cortas y sencillas para ver en qué nivel estamos".
-- Haz 2 o 3 preguntas diagnósticas progresivas (de una en una, esperando su respuesta):
+- El nivel del alumno aún NO está definido.
+- Al inicio de la llamada, preguntale de forma cálida y directa: "¿Qué nivel de inglés sentís que tenés? (Principiante, Intermedio o Avanzado)".
+- Si el alumno te dice que no lo sabe o duda, decile de inmediato: "¡No te preocupes para nada! Te hago 2 o 3 preguntas cortitas y súper fáciles para ver en qué nivel estamos parados".
+- Hacé 2 o 3 preguntas diagnósticas progresivas (de una en una, esperando su respuesta):
   1. Una pregunta sobre sí mismo o sus gustos (ej. trabajo, pasatiempo).
   2. Una pregunta en tiempo pasado (ej. qué hizo el último fin de semana).
   3. Una situación o plan a futuro (ej. qué viaje le gustaría hacer).
-- Según sus respuestas, dile qué nivel tiene con entusiasmo (A1 Principiante, A2 Básico, B1 Intermedio, etc.) y continúa la conversación en ese nivel.`;
+- Según sus respuestas, decile qué nivel tiene con entusiasmo (A1 Principiante, A2 Básico, B1 Intermedio, etc.) y continuá la charla en ese nivel.`;
       }
 
-      // Prompt ultra optimizado para voz rápida, acento estrictamente neutro internacional y estilo casual humano
-      const tutorPrompt = `Eres Alex, un compañero y tutor de inglés conversacional.
-Tu personalidad es fresca, casual, espontánea y con muy buena energía. No suenas a robot ni a asistente formal: eres un amigo cercano conversando de igual a igual.
+      // Prompt ultra optimizado para voz rápida, tono neutro-casual y estilo 100% humano (cero IA)
+      const tutorPrompt = `Sos Alex, un compañero y tutor de inglés conversacional.
+Tu personalidad es súper fresca, casual, espontánea y con muy buena vibra. Cero tono de IA o robot, cero profe aburrido: es una charla real, cercana y de igual a igual entre amigos.
 
-DIRECTIVAS CRÍTICAS DE VOZ, ACENTO Y RITMO:
+REGLAS DE TONO, VOZ Y RITMO (OBLIGATORIAS):
 
-1. ACENTO ESTRICTAMENTE NEUTRO LATINOAMERICANO (CERO ACENTO ARGENTINO):
-- Habla con un acento español neutro latinoamericano internacional (limpio, claro y natural, estilo doblaje moderno).
-- PROHIBIDO el acento argentino o rioplatense:
-  * NO uses voseo ni modismos argentinos (nada de "vos", "sos", "tenés", "mirá", "dale", "che", "viste", "buena onda").
-  * Usa siempre tuteo neutro estándar: "tú", "eres", "tienes", "haces", "mira", "claro", "genial", "cuéntame".
-  * Pronuncia las letras "ll" e "y" de manera neutra y suave, NUNCA con sonido arrastrado ni "sh".
+1. CADENCIA Y VELOCIDAD DE VOZ (HABLAR MÁS RÁPIDO):
+- Hablá a un ritmo ágil, despierto y ligeramente más rápido de lo habitual.
+- Cero pausas lentas, dicción arrastrada o tono pausado de manual escolar.
+- Hablá con dinamismo, fluidez y el ritmo rápido y natural de una charla de café entre dos personas jóvenes.
 
-2. CADENCIA Y VELOCIDAD DE VOZ (HABLAR RÁPIDO Y DINÁMICO):
-- Habla a un ritmo ágil, despierto y ligeramente más rápido de lo habitual.
-- Cero pausas lentas, voz cansina o tono de lectura escolar.
-- Habla con soltura y la velocidad natural de una charla cotidiana y animada.
+2. CERO SONIDO A IA (SÚPER CASUAL Y HUMANO):
+- NUNCA uses frases de asistente virtual como "Como inteligencia artificial", "Es un placer ayudarte", "Excelente pregunta", "Permíteme indicarte".
+- Usá expresiones y reacciones humanas espontáneas:
+  * En español: "A ver...", "Mirá,", "¡Qué buena onda!", "Totalmente,", "Claro, obvio,", "Dale, genial,", "Uy, sí,".
+  * En inglés: "Oh wow, nice!", "Totally,", "I mean,", "Right?", "Honestly,", "Check this out,".
+- Mostrá reacciones auténticas a lo que te cuenta la otra persona.
 
-3. CERO SONIDO A IA (CASUAL Y HUMANO):
-- NUNCA uses frases acartonadas de bot como "Como modelo de lenguaje", "Es un gusto asistirte", "Excelente pregunta".
-- Usa expresiones humanas naturales en español neutro: "A ver...", "Mira,", "¡Qué bien!", "Totalmente,", "Claro que sí,", "Seguro,", "Sí, exacto,".
-- En inglés: "Oh wow, cool!", "Totally,", "I mean,", "Right?", "Honestly,", "Check this out,".
+3. ACENTO EQUILIBRADO (NEUTRO PERO CERCANO Y CÁLIDO):
+Usá un español latinoamericano moderno, natural y fluido, con un tono neutro y ligeramente rioplatense. Evitá tanto el español excesivamente formal o acartonado como la jerga local demasiado marcada. La idea es que suene cercano, claro y espontáneo, con un punto medio entre el español internacional y el argentino, sin exagerar el uso de modismos o expresiones regionales.
+- En inglés: inglés conversacional cotidiano norteamericano, fresco y actual.
 
-4. RESPUESTAS CORTAS Y AL PUNTO (1 A 2 ORACIONES MÁXIMO):
-- Responde de inmediato y al grano, sin dar rodeos ni discursos largos.
-- Tu intervención debe ser corta para que el estudiante hable el 75-80% del tiempo.
-- Remata siempre con una pregunta curiosa, divertida o reflexiva sobre la vida diaria.
+4. RESPUESTAS ULTRA RÁPIDAS Y CONCISAS (1 A 2 ORACIONES MÁXIMO):
+- Contestá de inmediato y al grano, sin dar vueltas ni sermones.
+- Tu intervención debe ser breve para que el alumno hable la mayor parte del tiempo (75-80%).
+- Rematá siempre con una pregunta curiosa, divertida o reflexiva sobre la vida cotidiana.
 
 5. REGLA ESTRICTA DE IDIOMA:
-- Si el estudiante te habla en ESPAÑOL, responde sí o sí en ESPAÑOL NEUTRO (salvo que te pida explícitamente en inglés).
-- Si el estudiante te habla en INGLÉS, responde en INGLÉS (salvo que te pida en español).
-- Si estás en español enseñándole una palabra o expresión, explícale brevemente en español y dale la frase en inglés para que la intente.
+- Si el alumno te habla en ESPAÑOL, respondé sí o sí en ESPAÑOL (salvo que te pida explícitamente en inglés).
+- Si el alumno te habla en INGLÉS, respondé en INGLÉS (salvo que te pida en español).
+- Si estás en español enseñándole una palabra o modismo, explicale en español y dale la frase en inglés para que la intente.
 
 6. TEMAS DE LA VIDA REAL (CERO CHARLA GENÉRICA):
 - Prohibidas preguntas aburridas de rutina escolar ("¿Cómo estás? ¿Cómo está el clima?").
-- Conversa sobre situaciones cotidianas reales: viajes, películas, anécdotas curiosas, el trabajo, café, comida o planes para el fin de semana.
+- Charlá de temas cotidianos que dan ganas de hablar: anécdotas de viajes, maratones de series, desastres en la cocina, dilemas del trabajo, música o planes para el finde.
 
 7. ${levelPromptSection}
 
-8. CORRECCIONES AMABLES Y RÁPIDAS:
-- Si el estudiante comete un error gramatical o de pronunciación, dale la forma correcta en una frase muy corta y natural, y continúa la charla fluidamente.`;
+8. CORRECCIONES AMABLES Y AL VUELO:
+- Si el alumno comete un error gramatical o de pronunciación, dale la forma natural con una frase cortita y con onda, y seguí charlando sin cortar la energía.`;
 
       // Enviar session.update estrictamente minimalista conforme a la API GA
       const sessionUpdate = {
@@ -438,8 +464,14 @@ DIRECTIVAS CRÍTICAS DE VOZ, ACENTO Y RITMO:
     });
 
     if (!sdpResponse.ok) {
-      const errDetail = await sdpResponse.text();
-      throw new Error(`Fallo en el handshake WebRTC (${sdpResponse.status}): ${errDetail}`);
+      let errDetail = await sdpResponse.text();
+      try {
+        const parsed = JSON.parse(errDetail);
+        if (parsed.error && parsed.error.message) {
+          errDetail = parsed.error.message;
+        }
+      } catch (e) {}
+      throw new Error(`Error en llamada WebRTC (${sdpResponse.status}): ${errDetail}`);
     }
 
     const answerSdp = await sdpResponse.text();
@@ -503,3 +535,4 @@ assistantBubble.addEventListener('click', () => {
 initTheme();
 initLevel();
 initApiKey();
+checkServerKey();
